@@ -1,0 +1,65 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Sphinx build artifacts
+docs/_build/
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# VS Code settings
+.vscode/
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+.cache
+
+# Logs
+*.log
+
+# Mac system files
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# MyPy and other tooling caches
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# PDM / poetry / pip tools
+__pypackages__/
+poetry.lock
+pdm.lock
+
+# Notebooks or output folders
+output/
+notebooks/output/
+figures/
+plots/
+
+# Data files (optional, if large)
+data/
+results/
