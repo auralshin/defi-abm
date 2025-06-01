@@ -4,9 +4,13 @@ from typing import Optional, Callable, List, Tuple
 
 class LiquidatorAgent(Agent):
     """
-    Monitors all borrowers in the system and initiates liquidation on accounts
-    that are no longer sufficiently collateralized. Can apply partial liquidation,
-    distribute collateral via AMM pools, and trigger post-liquidation actions.
+    Agent responsible for monitoring lending agents and initiating liquidations.
+
+    Attributes:
+        liquidation_penalty (float): Penalty applied to debt for liquidation incentive.
+        max_liquidation_fraction (float): Maximum portion of collateral to seize per liquidation.
+        amm_pool_selector (Callable): Function to select AMM pools for liquidation.
+        on_liquidation (Callable): Optional callback triggered upon liquidation event.
     """
 
     def __init__(
@@ -24,10 +28,20 @@ class LiquidatorAgent(Agent):
         self.on_liquidation = on_liquidation
 
     def _default_amm_selector(self, collateral_token: str, borrow_token: str) -> List:
+        """Select default AMM pool from model matching token pair."""
         pool = self.model.find_amm_pool(collateral_token, borrow_token)
         return [pool] if pool else []
 
     def _liquidate_position(self, lending_agent) -> dict:
+        """
+        Executes a liquidation for an undercollateralized lending agent.
+
+        Args:
+            lending_agent: The agent to be liquidated.
+
+        Returns:
+            dict: Event log including amounts repaid, seized, recovered.
+        """
         price = self.model.current_price
         debt_value = lending_agent.borrow_amount
         total_cover = debt_value * (1 + self.liquidation_penalty)
@@ -75,6 +89,7 @@ class LiquidatorAgent(Agent):
         return event
 
     def step(self):
+        """Scan loans for liquidation candidates and trigger liquidation if required."""
         for lending_agent in list(self.model.loans):
             if lending_agent.is_marked_for_liquidation:
                 event = self._liquidate_position(lending_agent)

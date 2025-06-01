@@ -1,6 +1,3 @@
-# src/defi_abm/models/defi_model.py
-
-import random
 from mesa import Model
 from mesa.datacollection import DataCollector
 
@@ -11,31 +8,35 @@ from defi_abm.agents.liquidator import LiquidatorAgent
 
 class DeFiModel(Model):
     """
-    Central Mesa 3.0+ Model for DeFi Agent‐Based Simulation.
+    Central Mesa 3.0+ Model for DeFi Agent-Based Simulation.
 
-    - Calls super().__init__(seed=…) so that Mesa initializes properly.
-    - Agents auto‐register in self.agents at construction.
-    - Use self.agents.do("step") or self.agents.shuffle_do("step") to activate.
-    - Unique IDs are assigned automatically by Mesa.
+    This model coordinates the execution of various DeFi agents like oracles,
+    AMMs, lenders, and liquidators. It supports configurable parameters via
+    a configuration dictionary passed during initialization.
+
+    Attributes:
+        current_price (float): Global price of the asset updated each step.
+        loans (list): List of DeFiLendingAgent instances with active loans.
+        metrics (dict): Collected metrics including TVLs and number of loans.
+        datacollector (DataCollector): Mesa data collector for TVL and loan metrics.
+        num_steps (int): Total number of steps to simulate.
     """
 
     def __init__(self, config: dict):
-        # Pass seed (if any) into super().__init__
+        """Initialize the model with a configuration dictionary."""
         sim_cfg = config.get("simulation", {})
         seed = sim_cfg.get("seed", None)
         super().__init__(seed=seed)
 
-        # Number of steps we plan to run (not strictly necessary since Mesa has step_count)
         self.num_steps = sim_cfg.get("steps", 1_000)
 
-        # --- Protocol Parameters ---
         proto_cfg = config.get("protocols", {})
 
-        # Oracle
+        # Oracle configuration
         oracle_cfg = proto_cfg.get("oracle", {})
         self.initial_price = float(oracle_cfg.get("initial_price", 1.0))
 
-        # AMM
+        # AMM configuration
         amm_cfg = proto_cfg.get("amm", {})
         self.amm_token_x = amm_cfg.get("token_x", "TOKEN_X")
         self.amm_token_y = amm_cfg.get("token_y", "TOKEN_Y")
@@ -43,7 +44,7 @@ class DeFiModel(Model):
         self.amm_reserve_y = float(amm_cfg.get("reserve_y", 1.0))
         self.amm_fee_rate = float(amm_cfg.get("fee_rate", 0.003))
 
-        # Lending
+        # Lending configuration
         lending_cfg = proto_cfg.get("lending", {})
         self.collateral_factor = float(lending_cfg.get("collateral_factor", 0.75))
         apr = float(lending_cfg.get("interest_rate_apr", 0.05))
@@ -52,24 +53,16 @@ class DeFiModel(Model):
         self.liquidation_penalty = float(lending_cfg.get("liquidation_penalty", 0.05))
         self.lending_agents_cfg = lending_cfg.get("agents", [])
 
-        # --- Global State ---
-        # Will be updated by OracleAgent.step()
         self.current_price = self.initial_price
-
-        # Track active DeFiLendingAgent instances with outstanding debt
         self.loans = []
-
-        # Metrics collector
         self.metrics = {
             "tvls": [],
             "num_loans": [],
             "liquidations": [],
         }
 
-        # --- DataCollector ---
         self.datacollector = DataCollector(
             model_reporters={
-                # Sum collateral_amount * current_price over all lending agents
                 "TVL": lambda m: sum(
                     agent.collateral_amount * m.current_price
                     for agent in m.agents
@@ -79,29 +72,19 @@ class DeFiModel(Model):
             }
         )
 
-        # --- Agent Initialization (auto‐registered in self.agents) ---
-        # 1. OracleAgent
         self._init_oracle(oracle_cfg)
-
-        # 2. AMMAgent
         self._init_amm(amm_cfg)
-
-        # 3. DeFiLendingAgent population
         self._init_lending_agents(self.lending_agents_cfg)
-
-        # 4. LiquidatorAgent
         self._init_liquidator(self.liquidation_penalty)
 
     def _init_oracle(self, oracle_cfg: dict):
         """
-        Instantiate OracleAgent (it auto‐registers in self.agents).
-        If price_csv is provided, load a Pandas series; otherwise constant.
+        Instantiate OracleAgent from config. Supports CSV or constant pricing.
         """
         price_series = None
         price_csv = oracle_cfg.get("price_csv", None)
         if price_csv:
             import pandas as pd
-
             df = pd.read_csv(price_csv)
             if "price" not in df.columns:
                 raise ValueError("Oracle CSV must have a 'price' column.")
@@ -111,7 +94,7 @@ class DeFiModel(Model):
 
     def _init_amm(self, amm_cfg: dict):
         """
-        Instantiate a single AMMAgent; store a reference in self.amm_pool.
+        Instantiate a single AMMAgent and store reference in self.amm_pool.
         """
         amm = AMMAgent(
             self,
@@ -125,7 +108,7 @@ class DeFiModel(Model):
 
     def _init_lending_agents(self, agents_cfg: list):
         """
-        Instantiate DeFiLendingAgent instances (auto‐registered).
+        Create DeFiLendingAgent instances using config entries.
         """
         for cfg in agents_cfg:
             DeFiLendingAgent(
@@ -138,27 +121,26 @@ class DeFiModel(Model):
 
     def _init_liquidator(self, penalty: float):
         """
-        Instantiate a single LiquidatorAgent (auto‐registered).
+        Instantiate a LiquidatorAgent to monitor and trigger liquidations.
         """
         LiquidatorAgent(self, liquidation_penalty=penalty)
 
     def get_lending_rate(self, token: str) -> float:
         """
-        Return the per‐block interest rate (constant across tokens for v1.0).
+        Get constant per-block lending rate. Token-agnostic in this version.
         """
         return self.interest_rate_per_block
 
     def register_loan(self, lending_agent: DeFiLendingAgent):
         """
-        Add lending_agent to self.loans if not already present.
-        (LiquidatorAgent will remove it later via lending_agent.remove().)
+        Register a loan agent if not already listed. Used by borrowers.
         """
         if lending_agent not in self.loans:
             self.loans.append(lending_agent)
 
     def find_amm_pool(self, token_x: str, token_y: str):
         """
-        Return the single AMMAgent if token_x/token_y match (either order), else None.
+        Return AMMAgent if it matches given token pair, else None.
         """
         if (
             self.amm_pool.token_x == token_x and self.amm_pool.token_y == token_y
@@ -170,19 +152,14 @@ class DeFiModel(Model):
 
     def step(self):
         """
-        Advance the model one tick:
-          1. Mesa auto‐increments self.step_count.
-          2. Activate all agents’ step() in a random order (shuffle_do).
-          3. Collect data via DataCollector.
-          4. Record TVL and number of loans in metrics dict.
+        Advance the model by one simulation tick:
+        - Shuffles and steps all agents
+        - Collects TVL and loan metrics
+        - Updates internal metric tracking
         """
-        # 1. Shuffle and execute each agent’s step
         self.agents.shuffle_do("step")
-
-        # 2. Collect model‐level metrics
         self.datacollector.collect(self)
 
-        # 3. Record into metrics dictionary
         tvl = sum(
             agent.collateral_amount * self.current_price
             for agent in self.agents

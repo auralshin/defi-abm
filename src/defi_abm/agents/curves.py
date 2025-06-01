@@ -4,8 +4,12 @@ from typing import Tuple
 
 class BaseCurve(ABC):
     """
-    Base class for all AMM pricing curves. To customize behavior,
-    implement the swap and LP deposit/withdraw methods.
+    Abstract base class for AMM pricing curves.
+
+    To implement a custom curve, subclass this and implement the three required methods:
+    - compute_swap
+    - compute_deposit_lp
+    - compute_withdraw_lp
     """
 
     @abstractmethod
@@ -18,6 +22,15 @@ class BaseCurve(ABC):
     ) -> Tuple[float, float]:
         """
         Calculate output and fee based on an input amount and reserves.
+
+        Args:
+            amount_in (float): Amount of input token provided.
+            reserve_in (float): Current reserve of the input token.
+            reserve_out (float): Current reserve of the output token.
+            fee_rate (float): Swap fee rate (e.g., 0.003).
+
+        Returns:
+            Tuple[float, float]: Output amount of the other token, fee charged.
         """
         pass
 
@@ -32,6 +45,16 @@ class BaseCurve(ABC):
     ) -> float:
         """
         Determine LP tokens to mint for a given liquidity deposit.
+
+        Args:
+            reserve_x (float): Reserve of token X.
+            reserve_y (float): Reserve of token Y.
+            total_lp_supply (float): Total LP token supply.
+            amount_x (float): Amount of token X to deposit.
+            amount_y (float): Amount of token Y to deposit.
+
+        Returns:
+            float: Amount of LP tokens to mint.
         """
         pass
 
@@ -45,13 +68,22 @@ class BaseCurve(ABC):
     ) -> Tuple[float, float]:
         """
         Determine token amounts to return when LP tokens are burned.
+
+        Args:
+            reserve_x (float): Reserve of token X.
+            reserve_y (float): Reserve of token Y.
+            total_lp_supply (float): Total LP token supply.
+            lp_tokens (float): Amount of LP tokens to burn.
+
+        Returns:
+            Tuple[float, float]: Amounts of token X and Y to return.
         """
         pass
 
 
 class ConstantProductCurve(BaseCurve):
     """
-    Implements the classic x * y = k AMM logic (e.g. Uniswap v2).
+    Implements the constant product curve x * y = k used in many AMMs (e.g., Uniswap v2).
     """
 
     def compute_swap(
@@ -61,6 +93,18 @@ class ConstantProductCurve(BaseCurve):
         reserve_out: float,
         fee_rate: float,
     ) -> Tuple[float, float]:
+        """
+        Compute output amount and fee from a swap given reserves and fee rate.
+
+        Args:
+            amount_in (float): Input token amount.
+            reserve_in (float): Current reserve of input token.
+            reserve_out (float): Current reserve of output token.
+            fee_rate (float): Swap fee rate.
+
+        Returns:
+            Tuple[float, float]: Output token amount, fee collected.
+        """
         if amount_in <= 0 or reserve_in < 0 or reserve_out <= 0:
             return 0.0, 0.0
 
@@ -82,6 +126,19 @@ class ConstantProductCurve(BaseCurve):
         amount_x: float,
         amount_y: float,
     ) -> float:
+        """
+        Calculate LP tokens to mint when liquidity is added.
+
+        Args:
+            reserve_x (float): Current reserve of token X.
+            reserve_y (float): Current reserve of token Y.
+            total_lp_supply (float): Current total LP supply.
+            amount_x (float): Amount of token X being deposited.
+            amount_y (float): Amount of token Y being deposited.
+
+        Returns:
+            float: LP tokens to mint.
+        """
         if reserve_x <= 0 or reserve_y <= 0 or total_lp_supply <= 0:
             return (amount_x * amount_y) ** 0.5
 
@@ -99,6 +156,18 @@ class ConstantProductCurve(BaseCurve):
         total_lp_supply: float,
         lp_tokens: float,
     ) -> Tuple[float, float]:
+        """
+        Calculate token amounts to return when LP tokens are burned.
+
+        Args:
+            reserve_x (float): Reserve of token X.
+            reserve_y (float): Reserve of token Y.
+            total_lp_supply (float): Total LP supply.
+            lp_tokens (float): LP tokens to burn.
+
+        Returns:
+            Tuple[float, float]: Token X and token Y amounts returned.
+        """
         if lp_tokens <= 0 or total_lp_supply <= 0:
             return 0.0, 0.0
 

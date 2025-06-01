@@ -5,8 +5,19 @@ from defi_abm.utils.math_helpers import accrue_interest
 
 class DeFiLendingAgent(Agent):
     """
-    A lending agent supporting collateralized borrowing, interest accrual,
-    and liquidation monitoring. Works with multiple IRM modes and usage models.
+    A DeFi lending agent capable of borrowing against collateral, accruing interest,
+    and monitoring for liquidation conditions. Supports customizable interest rate models (IRMs).
+
+    Attributes:
+        collateral_token (str): The token used as collateral.
+        borrow_token (str): The token being borrowed.
+        collateral_amount (float): Amount of collateral deposited.
+        desired_ltv (float): Desired loan-to-value ratio.
+        risk_tolerance (float): Optional risk buffer for liquidation thresholds.
+        irm_mode (str): Interest rate model type ('fixed', 'linear', or 'kinked').
+        irm_params (dict): Parameters for the IRM.
+        utilization_model (Callable): Optional dynamic utilization function.
+        on_borrow, on_repay, on_withdraw (Callable): Optional event hooks.
     """
 
     def __init__(
@@ -43,15 +54,18 @@ class DeFiLendingAgent(Agent):
         self.on_withdraw = on_withdraw
 
     def get_collateral_value(self) -> float:
+        """Returns the USD value of current collateral using model price."""
         return self.collateral_amount * self.model.current_price
 
     def get_health_ratio(self) -> float:
+        """Returns health ratio; values >1 mean safe, <=1 means risk of liquidation."""
         if self.borrow_amount <= 0:
             return float("inf")
         max_allowed = self.get_collateral_value() * self.model.collateral_factor
         return max_allowed / self.borrow_amount
 
     def _get_utilization(self) -> float:
+        """Compute current utilization rate from external or fallback model."""
         if self.utilization_model:
             return self.utilization_model()
 
@@ -62,6 +76,7 @@ class DeFiLendingAgent(Agent):
         return total_borrow / (total_borrow + total_cash)
 
     def _get_rate_from_internal_irm(self) -> float:
+        """Determine interest rate based on internal IRM configuration."""
         utilization = self._get_utilization()
 
         if self.irm_mode == "fixed":
@@ -85,6 +100,7 @@ class DeFiLendingAgent(Agent):
         raise ValueError(f"Unsupported IRM mode: {self.irm_mode}")
 
     def borrow(self, amount: Optional[float] = None) -> float:
+        """Borrow up to the allowed LTV based on collateral. Defaults to max."""
         collateral_value = self.get_collateral_value()
         max_borrow_allowed = collateral_value * self.desired_ltv
 
@@ -104,6 +120,7 @@ class DeFiLendingAgent(Agent):
         return amount
 
     def repay(self, repay_amount: float) -> float:
+        """Repay some or all borrowed amount. Returns actual repaid value."""
         if repay_amount <= 0 or self.borrow_amount <= 0:
             return 0.0
 
@@ -118,6 +135,10 @@ class DeFiLendingAgent(Agent):
         return actual_repay
 
     def withdraw_collateral(self, amount: float) -> float:
+        """
+        Withdraw available collateral not required to back current borrow.
+        Ensures health remains above liquidation threshold.
+        """
         if amount <= 0 or self.collateral_amount <= 0:
             return 0.0
 
@@ -136,6 +157,7 @@ class DeFiLendingAgent(Agent):
         return actual_withdraw
 
     def _accrue_borrow_interest(self):
+        """Apply one step of interest accrual to outstanding borrow."""
         if self.borrow_amount <= 0:
             return
         try:
@@ -146,6 +168,7 @@ class DeFiLendingAgent(Agent):
         self.borrow_amount = accrue_interest(self.borrow_amount, rate, 1)
 
     def _evaluate_health(self):
+        """Update liquidation flag based on collateral vs borrow value."""
         if self.borrow_amount <= 0:
             self.is_marked_for_liquidation = False
             return
@@ -154,6 +177,7 @@ class DeFiLendingAgent(Agent):
         self.is_marked_for_liquidation = self.borrow_amount > max_allowed
 
     def step(self):
+        """Run a simulation tick: try borrowing, accrue interest, check health."""
         if self.borrow_amount == 0.0:
             self.borrow()
         self._accrue_borrow_interest()

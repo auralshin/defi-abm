@@ -5,7 +5,30 @@ import yaml
 
 def load_config(path: str) -> dict:
     """
-    Load a configuration file (YAML or JSON) from `path` and return a Python dict.
+    Load a configuration file (YAML or JSON) from the given path and return it as a Python dictionary.
+
+    This utility supports `.yaml`, `.yml`, and `.json` file formats. It performs file existence checks,
+    handles file extension parsing, and ensures the root object of the loaded config is a dictionary.
+
+    Parameters
+    ----------
+    path : str
+        The path to the configuration file.
+
+    Returns
+    -------
+    dict
+        Parsed configuration data as a Python dictionary.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist at the given path.
+
+    ValueError
+        - If the file extension is unsupported.
+        - If the file content is not a dictionary.
+        - If PyYAML is not installed when loading a YAML file.
     """
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Config file not found: {path}")

@@ -2,6 +2,24 @@ from mesa import Agent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 class Transaction:
+    """
+    Represents a transaction in the blockchain simulation.
+
+    Attributes:
+        tx_id (int): Unique identifier for the transaction.
+        sender (Any): Address or agent sending the transaction.
+        receiver (Any): Address or contract receiving the transaction.
+        data_fn (Callable): Execution logic of the transaction.
+        gas_price (float): Gas price offered.
+        gas_limit (int): Maximum gas allowed.
+        payload (Any): Optional data sent with transaction.
+        submit_block (int): Block number at which it was submitted.
+        confirmations_required (int): Blocks to wait before execution.
+        included_block (Optional[int]): Block in which it's included.
+        executed (bool): Whether the transaction has been executed.
+        gas_used (Optional[int]): Actual gas consumed.
+        return_value (Any): Return data from execution.
+    """
     def __init__(
         self,
         tx_id: int,
@@ -30,6 +48,17 @@ class Transaction:
 
 
 class BlockchainAgent(Agent):
+    """
+    A modular agent simulating blockchain behavior in a DeFi environment.
+
+    Supports:
+        - Block timing
+        - Transaction queue and confirmation
+        - Contract registration
+        - Event logging
+        - State snapshots for reorgs
+    """
+
     def __init__(
         self,
         model,
@@ -38,6 +67,7 @@ class BlockchainAgent(Agent):
         base_gas_price: float = 1.0,
         initial_native_balance: float = 0.0,
     ):
+        """Initialize the blockchain agent."""
         super().__init__(model)
         self.current_block: int = 0
         self.timestamp: float = 0.0
@@ -61,20 +91,25 @@ class BlockchainAgent(Agent):
         }
 
     def create_account(self, address: Any, initial_balance: Optional[float] = None) -> None:
+        """Register a new account with optional initial native token balance."""
         self.native_balances[address] = float(initial_balance) if initial_balance else 0.0
 
     def register_contract(self, contract_address: Any, contract_instance: Any) -> None:
+        """Register a smart contract, optionally initializing token supply."""
         self.contracts[contract_address] = contract_instance
         if hasattr(contract_instance, "initial_supply") and hasattr(contract_instance, "symbol"):
             self.token_balances[(contract_address, contract_address)] = float(contract_instance.initial_supply)
 
     def get_native_balance(self, address: Any) -> float:
+        """Return native token balance for a given address."""
         return self.native_balances.get(address, 0.0)
 
     def get_token_balance(self, contract_address: Any, holder: Any) -> float:
+        """Return token balance of a holder for a given contract."""
         return self.token_balances.get((contract_address, holder), 0.0)
 
     def transfer_native(self, frm: Any, to: Any, amount: float) -> bool:
+        """Transfer native tokens between accounts."""
         if self.native_balances.get(frm, 0.0) < amount or amount < 0:
             return False
         self.native_balances[frm] -= amount
@@ -82,6 +117,7 @@ class BlockchainAgent(Agent):
         return True
 
     def transfer_token(self, contract_address: Any, frm: Any, to: Any, amount: float) -> bool:
+        """Transfer tokens for a contract between two holders."""
         key_from = (contract_address, frm)
         key_to = (contract_address, to)
         if self.token_balances.get(key_from, 0.0) < amount or amount < 0:
@@ -100,6 +136,7 @@ class BlockchainAgent(Agent):
         payload: Any = None,
         confirmations: Optional[int] = None,
     ) -> int:
+        """Submit a new transaction to the mempool."""
         if gas_price is None:
             gas_price = self.metrics.get("base_gas_price", 1.0)
         if gas_limit is None:
@@ -124,6 +161,7 @@ class BlockchainAgent(Agent):
         return tx.tx_id
 
     def _include_transactions(self) -> None:
+        """Move transactions from mempool to the inclusion queue."""
         for tx in self.mempool:
             tx.included_block = self.current_block
             self.tx_queue.append(tx)
@@ -131,6 +169,7 @@ class BlockchainAgent(Agent):
         self.mempool.clear()
 
     def _execute_transaction(self, tx: Transaction) -> None:
+        """Execute a transaction if sender has sufficient gas."""
         required_fee = tx.gas_limit * tx.gas_price
         if not self.transfer_native(tx.sender, self, required_fee):
             self._log_event(
@@ -158,11 +197,13 @@ class BlockchainAgent(Agent):
         )
 
     def _log_event(self, block: int, event_name: str, payload: Any) -> None:
+        """Store an event in the event log for a specific block."""
         if block not in self.event_logs:
             self.event_logs[block] = []
         self.event_logs[block].append((event_name, payload))
 
     def get_events(self, block: Optional[int] = None) -> List[Tuple[str, Any]]:
+        """Get all events from a block or the full chain."""
         if block is None:
             all_events = []
             for ev_list in self.event_logs.values():
@@ -171,11 +212,13 @@ class BlockchainAgent(Agent):
         return self.event_logs.get(block, [])
 
     def subscribe_new_block(self, callback: Callable[[int, float], None]) -> None:
+        """Register a callback to run every new block."""
         if "new_block_listeners" not in self.metrics:
             self.metrics["new_block_listeners"] = []
         self.metrics["new_block_listeners"].append(callback)
 
     def _notify_new_block(self) -> None:
+        """Trigger all callbacks for a new block."""
         for cb in self.metrics.get("new_block_listeners", []):
             try:
                 cb(self.current_block, self.timestamp)
@@ -183,11 +226,13 @@ class BlockchainAgent(Agent):
                 pass
 
     def schedule_call(self, block_number: int, fn: Callable[[], None]) -> None:
+        """Schedule a function to run at a future block."""
         if block_number < self.current_block:
             raise ValueError("Cannot schedule call in past block")
         self.scheduled.setdefault(block_number, []).append(fn)
 
     def _run_scheduled(self) -> None:
+        """Run any scheduled callbacks at this block."""
         funcs = self.scheduled.pop(self.current_block, [])
         for fn in funcs:
             try:
@@ -196,6 +241,7 @@ class BlockchainAgent(Agent):
                 pass
 
     def snapshot_chain(self) -> None:
+        """Create a snapshot of chain state for reorgs."""
         snap = {
             "current_block": self.current_block,
             "timestamp": self.timestamp,
@@ -206,6 +252,7 @@ class BlockchainAgent(Agent):
         self.chain_history.append(snap)
 
     def revert_to_block(self, block_number: int) -> None:
+        """Revert chain state to a previously saved snapshot."""
         idx = None
         for i, snap in enumerate(self.chain_history):
             if snap["current_block"] <= block_number:
@@ -222,6 +269,7 @@ class BlockchainAgent(Agent):
         self.chain_history = self.chain_history[: idx + 1]
 
     def step(self) -> None:
+        """Advance the chain one block forward."""
         self.snapshot_chain()
         self.current_block += 1
         self.timestamp += self.block_time
@@ -248,30 +296,38 @@ class BlockchainAgent(Agent):
         })
 
     def set_base_gas_price(self, new_price: float) -> None:
+        """Set a new base gas price."""
         self.metrics["base_gas_price"] = float(new_price)
 
     def reorder_mempool(self, key_fn: Optional[Callable[[Transaction], Any]] = None) -> None:
+        """Reorder mempool transactions (default: by descending gas price)."""
         if key_fn is None:
             self.mempool.sort(key=lambda tx: tx.gas_price, reverse=True)
         else:
             self.mempool.sort(key=key_fn)
 
     def get_current_block(self) -> int:
+        """Return current block height."""
         return self.current_block
 
     def get_timestamp(self) -> float:
+        """Return current chain timestamp."""
         return self.timestamp
 
     def get_pending_txs(self) -> List[int]:
+        """Return list of pending transaction IDs."""
         return [tx.tx_id for tx in self.mempool]
 
     def get_queued_txs(self) -> List[int]:
+        """Return list of queued transaction IDs."""
         return [tx.tx_id for tx in self.tx_queue]
 
     def get_metrics(self) -> Dict[str, Any]:
+        """Return dictionary of chain metrics."""
         return self.metrics
 
     def get_account_state(self, address: Any) -> Dict[str, Union[float, Dict]]:
+        """Return a summary of an account’s balances."""
         native = self.get_native_balance(address)
         tokens = {
             c: self.get_token_balance(c, address)

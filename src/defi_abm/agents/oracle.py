@@ -6,6 +6,12 @@ from enum import Enum
 
 
 class OracleMode(str, Enum):
+    """
+    Enum for specifying oracle operation modes.
+    - CSV: Read prices from a CSV/pandas Series.
+    - GBM: Generate synthetic prices using Geometric Brownian Motion.
+    - STATIC: Use a fixed constant price.
+    """
     CSV = "csv"
     GBM = "gbm"
     STATIC = "static"
@@ -13,11 +19,19 @@ class OracleMode(str, Enum):
 
 class OracleAgent(Agent):
     """
-    Publishes a price feed each step using one of the supported modes:
-    - CSV: from a pandas Series (usually loaded from historical data)
-    - GBM: synthetic Geometric Brownian Motion generator
-    - STATIC: fixed price
-    Tracks history and supports optional update hook.
+    Oracle agent for publishing price data in an agent-based DeFi simulation.
+
+    Attributes:
+        mode (OracleMode): Mode of operation.
+        price_series (pd.Series): Price data (only for CSV mode).
+        mu (float): Drift rate for GBM mode.
+        sigma (float): Volatility for GBM mode.
+        dt (float): Time step for GBM mode.
+        last_price (float): Last recorded price.
+        current_price (float): Latest published price.
+        price_history (List[float]): History of published prices.
+        on_price_update (Callable): Callback on each price update.
+        _rng (np.random.Generator): Random number generator for GBM.
     """
 
     def __init__(
@@ -63,17 +77,20 @@ class OracleAgent(Agent):
         self._rng = np.random.default_rng(seed or getattr(self.model, "seed", None))
 
     def _gbm_next(self) -> float:
+        """Generate next price using GBM formula."""
         drift = (self.mu - 0.5 * self.sigma ** 2) * self.dt
         diffusion = self.sigma * np.sqrt(self.dt) * self._rng.normal()
         next_price = self.last_price * np.exp(drift + diffusion)
         return max(next_price, 0.0)
 
     def _csv_step(self) -> float:
+        """Return price at current step from CSV series."""
         t = max(self.model.steps - 1, 0)
         idx = min(t, len(self.price_series) - 1)
         return float(self.price_series.iloc[idx])
 
     def _gbm_step(self) -> float:
+        """Advance GBM model and return next price."""
         if self.model.steps <= 1 and self.price_series is not None:
             self.last_price = float(self.price_series.iloc[0])
         else:
@@ -81,12 +98,15 @@ class OracleAgent(Agent):
         return self.last_price
 
     def _static_step(self) -> float:
+        """Return the constant price for STATIC mode."""
         return self.current_price
 
     def step(self):
         """
-        Update and publish price each block. Uses the configured mode to generate the new value.
-        Calls on_price_update if provided.
+        Perform one simulation step.
+
+        Updates the oracle price using the configured mode, updates model's global price,
+        and triggers callback if defined.
         """
         dispatch = {
             OracleMode.CSV: self._csv_step,

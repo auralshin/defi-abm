@@ -1,5 +1,7 @@
+.. DeFi-ABM documentation master file
+
 Welcome to DeFi-ABM's documentation!
-====================================
+=====================================
 
 .. toctree::
    :maxdepth: 2
@@ -8,3 +10,10 @@ Welcome to DeFi-ABM's documentation!
    agents
    models
    utils
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
