@@ -344,7 +344,14 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Oracle CSV must have a &#39;price&#39; column.&quot;</span><span class="p">)</span>
             <span class="n">price_series</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">OracleAgent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">price_series</span><span class="o">=</span><span class="n">price_series</span><span class="p">)</span>
+            <span class="n">OracleAgent</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="n">price_series</span><span class="o">=</span><span class="n">price_series</span><span class="p">,</span>
+                <span class="n">mode</span><span class="o">=</span><span class="n">oracle_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="s2">&quot;static&quot;</span><span class="p">),</span>
+                <span class="n">static_price</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">oracle_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;initial_price&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span>
+                <span class="n">gbm_params</span><span class="o">=</span><span class="n">oracle_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gbm_params&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">interpolate</span><span class="o">=</span><span class="n">oracle_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interpolate&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_init_amm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amm_cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
