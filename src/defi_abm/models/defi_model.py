@@ -164,6 +164,11 @@ class DeFiModel(Model):
         - Collects TVL and loan metrics
         - Updates internal metric tracking
         """
+        if not hasattr(self, "steps"):
+            self.steps = 1
+        else:
+            self.steps += 1
+
         self.agents.shuffle_do("step")
         self.datacollector.collect(self)
 

@@ -734,6 +734,7 @@ def simple_config(tmp_path):
             "oracle": {
                 "price_csv": price_csv_path,
                 "initial_price": 100.0,
+                "mode": "csv",
             },
             "amm": {
                 "token_x": "ETH",

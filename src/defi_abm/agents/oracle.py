@@ -73,7 +73,7 @@ class OracleAgent(Agent):
             self.last_price = float(static_price)
 
         self.current_price = float(self.price_series.iloc[0]) if self.mode == OracleMode.CSV else float(static_price)
-
+        self._step_counter = 0
         self._rng = np.random.default_rng(seed or getattr(self.model, "seed", None))
 
     def _gbm_next(self) -> float:
@@ -85,8 +85,7 @@ class OracleAgent(Agent):
 
     def _csv_step(self) -> float:
         """Return price at current step from CSV series."""
-        t = max(self.model.steps - 1, 0)
-        idx = min(t, len(self.price_series) - 1)
+        idx = min(self._step_counter, len(self.price_series) - 1)
         return float(self.price_series.iloc[idx])
 
     def _gbm_step(self) -> float:
@@ -120,3 +119,6 @@ class OracleAgent(Agent):
 
         if self.on_price_update:
             self.on_price_update(self, self.current_price, self.model.steps)
+        if self.mode == OracleMode.CSV:
+            self._step_counter += 1
+
