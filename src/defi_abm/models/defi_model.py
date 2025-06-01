@@ -90,7 +90,14 @@ class DeFiModel(Model):
                 raise ValueError("Oracle CSV must have a 'price' column.")
             price_series = df["price"].reset_index(drop=True)
 
-        OracleAgent(self, price_series=price_series)
+            OracleAgent(
+                self,
+                price_series=price_series,
+                mode=oracle_cfg.get("mode", "static"),
+                static_price=float(oracle_cfg.get("initial_price", 1.0)),
+                gbm_params=oracle_cfg.get("gbm_params", None),
+                interpolate=oracle_cfg.get("interpolate", False),
+            )
 
     def _init_amm(self, amm_cfg: dict):
         """

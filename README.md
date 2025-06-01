@@ -1,4 +1,4 @@
-# DeFi-ABM
+# DeFi-ABM [In development]
 
 A modular, agent-based simulation framework for DeFi protocols built on top of Mesa.\
 Includes prebuilt agents for:
