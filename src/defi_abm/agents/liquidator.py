@@ -1,5 +1,8 @@
 from mesa import Agent
 from typing import Optional, Callable, List, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LiquidatorAgent(Agent):
@@ -51,6 +54,9 @@ class LiquidatorAgent(Agent):
         collateral_to_seize = min(collateral_needed_unbounded, max_seizable)
 
         lending_agent.collateral_amount -= collateral_to_seize
+        logger.info(
+            "Liquidating agent %s for %.4f debt", lending_agent.unique_id, debt_value
+        )
 
         recovered_amount = 0.0
         amm_pools = self.amm_pool_selector(lending_agent.collateral_token, lending_agent.borrow_token)
@@ -86,6 +92,9 @@ class LiquidatorAgent(Agent):
             "remaining_debt": lending_agent.borrow_amount if not fully_liquidated else 0.0,
             "timestamp": self.model.steps,
         }
+        logger.info(
+            "Liquidation complete for %s; repaid %.4f", lending_agent.unique_id, debt_repaid
+        )
         return event
 
     def step(self):

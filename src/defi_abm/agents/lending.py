@@ -1,6 +1,10 @@
 from mesa import Agent
 from typing import Optional, Callable
+import logging
+
 from defi_abm.utils.math_helpers import accrue_interest
+
+logger = logging.getLogger(__name__)
 
 
 class DeFiLendingAgent(Agent):
@@ -110,10 +114,15 @@ class DeFiLendingAgent(Agent):
             amount = min(amount, max_borrow_allowed)
 
         if amount <= 0:
+            logger.debug("%s attempted zero borrow", self)
             return 0.0
 
         self.borrow_amount += amount
         self.model.register_loan(self)
+
+        logger.info(
+            "Agent %s borrowed %.4f %s", self.unique_id, amount, self.borrow_token
+        )
 
         if self.on_borrow:
             self.on_borrow(self, amount)
@@ -122,6 +131,7 @@ class DeFiLendingAgent(Agent):
     def repay(self, repay_amount: float) -> float:
         """Repay some or all borrowed amount. Returns actual repaid value."""
         if repay_amount <= 0 or self.borrow_amount <= 0:
+            logger.debug("%s attempted invalid repay", self)
             return 0.0
 
         actual_repay = min(repay_amount, self.borrow_amount)
@@ -132,6 +142,9 @@ class DeFiLendingAgent(Agent):
 
         if self.on_repay:
             self.on_repay(self, actual_repay)
+        logger.info(
+            "Agent %s repaid %.4f %s", self.unique_id, actual_repay, self.borrow_token
+        )
         return actual_repay
 
     def withdraw_collateral(self, amount: float) -> float:
@@ -140,6 +153,7 @@ class DeFiLendingAgent(Agent):
         Ensures health remains above liquidation threshold.
         """
         if amount <= 0 or self.collateral_amount <= 0:
+            logger.debug("%s attempted invalid withdrawal", self)
             return 0.0
 
         if self.borrow_amount > 0:
@@ -154,6 +168,12 @@ class DeFiLendingAgent(Agent):
 
         if self.on_withdraw:
             self.on_withdraw(self, actual_withdraw)
+        logger.info(
+            "Agent %s withdrew %.4f %s collateral",
+            self.unique_id,
+            actual_withdraw,
+            self.collateral_token,
+        )
         return actual_withdraw
 
     def _accrue_borrow_interest(self):

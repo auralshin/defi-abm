@@ -1,5 +1,9 @@
 from mesa import Model
 from mesa.datacollection import DataCollector
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from defi_abm.agents.oracle import OracleAgent
 from defi_abm.agents.amm import AMMAgent
@@ -145,10 +149,8 @@ class DeFiModel(Model):
         if lending_agent not in self.loans:
             self.loans.append(lending_agent)
 
-    def find_amm_pool(self, token_x: str, token_y: str):
-        """
-        Return AMMAgent if it matches given token pair, else None.
-        """
+    def find_amm_pool(self, token_x: str, token_y: str) -> Optional[AMMAgent]:
+        """Return AMMAgent if it matches given token pair, else None."""
         if (
             self.amm_pool.token_x == token_x and self.amm_pool.token_y == token_y
         ) or (
@@ -169,6 +171,8 @@ class DeFiModel(Model):
         else:
             self.steps += 1
 
+        logger.debug("Model step %s", self.steps)
+
         self.agents.shuffle_do("step")
         self.datacollector.collect(self)
 
@@ -179,3 +183,6 @@ class DeFiModel(Model):
         )
         self.metrics["tvls"].append(tvl)
         self.metrics["num_loans"].append(len(self.loans))
+        logger.info(
+            "Step %s - TVL: %.2f, Loans: %s", self.steps, tvl, len(self.loans)
+        )

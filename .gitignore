@@ -63,3 +63,4 @@ plots/
 # Data files (optional, if large)
 data/
 results/
+src/defi-abm/
