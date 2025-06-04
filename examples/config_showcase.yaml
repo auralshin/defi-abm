@@ -1,5 +1,5 @@
 simulation:
-  steps: 40
+  steps: 1000
   seed: 42
 
 protocols:
