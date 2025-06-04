@@ -327,7 +327,10 @@
         <span class="n">lending_agent</span><span class="o">.</span><span class="n">borrow_amount</span> <span class="o">-=</span> <span class="n">debt_repaid</span>
         <span class="n">penalty_paid</span> <span class="o">=</span> <span class="n">debt_value</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">liquidation_penalty</span>
 
-        <span class="n">fully_liquidated</span> <span class="o">=</span> <span class="n">lending_agent</span><span class="o">.</span><span class="n">borrow_amount</span> <span class="o">&lt;=</span> <span class="mf">1e-8</span> <span class="ow">or</span> <span class="n">collateral_to_seize</span> <span class="o">&gt;=</span> <span class="n">lending_agent</span><span class="o">.</span><span class="n">collateral_amount</span> <span class="o">+</span> <span class="n">collateral_to_seize</span> <span class="o">-</span> <span class="mf">1e-8</span>
+        <span class="n">fully_liquidated</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">lending_agent</span><span class="o">.</span><span class="n">borrow_amount</span> <span class="o">&lt;=</span> <span class="mf">1e-8</span>
+            <span class="ow">or</span> <span class="n">lending_agent</span><span class="o">.</span><span class="n">collateral_amount</span> <span class="o">&lt;=</span> <span class="mf">1e-8</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">fully_liquidated</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">lending_agent</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">loans</span><span class="p">:</span>
