@@ -1,5 +1,5 @@
 from mesa import Agent
-from typing import Optional, Callable, List, Tuple
+from typing import Optional, Callable, List
 import logging
 
 logger = logging.getLogger(__name__)
