@@ -6,9 +6,9 @@ simulation:
 
 protocols:
   oracle:
-    # Path to a CSV containing a "price" column. You can replace this
-    # path as needed or omit to use a constant price = initial_price.
-    price_csv: "src/defi_abm/data/example_price.csv"
+    # Path to a CSV containing a "price" column.
+    # Relative paths are resolved from this examples directory.
+    price_csv: "example_price.csv"
     initial_price: 2000.0
 
   amm:
