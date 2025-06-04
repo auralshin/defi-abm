@@ -88,7 +88,13 @@ class BlockchainAgent(Agent):
             "tx_executed": 0,
             "total_fees_collected": 0.0,
             "blocks": [],
+            "base_gas_price": float(base_gas_price),
         }
+
+        if initial_native_balance > 0:
+            # Allow the blockchain itself to hold a balance for paying refunds
+            # or other native transfers.
+            self.native_balances[self] = float(initial_native_balance)
 
     def create_account(self, address: Any, initial_balance: Optional[float] = None) -> None:
         """Register a new account with optional initial native token balance."""
