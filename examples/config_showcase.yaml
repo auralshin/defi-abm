@@ -1,0 +1,31 @@
+simulation:
+  steps: 40
+  seed: 42
+
+protocols:
+  oracle:
+    price_csv: "example_price_showcase.csv"
+    initial_price: 2000.0
+    mode: csv
+
+  amm:
+    token_x: "ETH"
+    token_y: "DAI"
+    reserve_x: 10.0
+    reserve_y: 20000.0
+    fee_rate: 0.003
+
+  lending:
+    collateral_factor: 0.75
+    interest_rate_apr: 0.05
+    blocks_per_year: 2300000
+    liquidation_penalty: 0.05
+    agents:
+      - collateral_token: "ETH"
+        borrow_token: "DAI"
+        collateral_amount: 1.0
+        desired_ltv: 0.5
+      - collateral_token: "ETH"
+        borrow_token: "DAI"
+        collateral_amount: 0.5
+        desired_ltv: 0.6

@@ -5,12 +5,16 @@ import yaml
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from defi_abm.agents.oracle import OracleAgent
+
 from defi_abm.models.defi_model import DeFiModel
 
 def main():
     # 1. Locate and load the YAML configuration
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(script_dir, "config_liquidation.yaml")
+    # Use a config that triggers a sharp price drop early on so we
+    # can easily demonstrate liquidations and changing TVL
+    config_path = os.path.join(script_dir, "config_showcase.yaml")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -38,14 +42,23 @@ def main():
     for event in model.metrics["liquidations"]:
         print(event)
 
-    # 7. Plot TVL over time for quick visualization
-    plt.figure(figsize=(8, 4))
-    plt.plot(df.index, df["TVL"], label="TVL (in borrow‐token units)")
-    plt.xlabel("Time Step")
-    plt.ylabel("TVL")
-    plt.title("Protocol TVL over Time")
-    plt.legend()
-    plt.tight_layout()
+    # 7. Plot TVL and price for quick visualization
+    oracle = next(a for a in model.agents if isinstance(a, OracleAgent))
+
+    fig, ax1 = plt.subplots(figsize=(8, 4))
+    ax1.plot(df.index, df["TVL"], label="TVL", color="tab:blue")
+    ax1.set_xlabel("Time Step")
+    ax1.set_ylabel("TVL", color="tab:blue")
+    ax1.tick_params(axis="y", labelcolor="tab:blue")
+
+    ax2 = ax1.twinx()
+    ax2.plot(df.index, oracle.price_history[: len(df)], label="Price", color="tab:orange", linestyle="--")
+    ax2.set_ylabel("Price", color="tab:orange")
+    ax2.tick_params(axis="y", labelcolor="tab:orange")
+
+    fig.suptitle("Protocol TVL and Price Over Time")
+    fig.tight_layout()
+    fig.legend(loc="upper left")
     plt.show()
 
 
