@@ -14,6 +14,11 @@ def main():
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
+    # Resolve relative CSV path for the oracle price series
+    price_csv = config.get("protocols", {}).get("oracle", {}).get("price_csv")
+    if price_csv and not os.path.isabs(price_csv):
+        config["protocols"]["oracle"]["price_csv"] = os.path.join(script_dir, price_csv)
+
     # 2. Instantiate the DeFiModel
     model = DeFiModel(config)
 
