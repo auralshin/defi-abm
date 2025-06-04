@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 project = 'DeFi-ABM'
 copyright = '2025, Auralshin'
 author = 'Auralshin'
-release = '0.1'
+release = '1.0.0'
 
 extensions = [
     'sphinx.ext.autodoc',
