@@ -1,4 +1,4 @@
-# src/defi_abm/examples/run_simple.py
+# examples/run_simple.py
 
 import os
 import yaml

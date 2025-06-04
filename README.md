@@ -44,6 +44,15 @@ See the Sphinx documentation in `docs/` for full API details.
 pytest -q
 ```
 
+## Examples
+
+Sample configuration files and scripts can be found in the `examples/` directory.
+Run the basic demonstration with:
+
+```bash
+python examples/run_simple.py
+```
+
 ## License
 
 Released under the MIT License.
