@@ -89,6 +89,7 @@ class BlockchainAgent(Agent):
             "total_fees_collected": 0.0,
             "blocks": [],
         }
+        self.metrics["base_gas_price"] = float(base_gas_price)
 
     def create_account(self, address: Any, initial_balance: Optional[float] = None) -> None:
         """Register a new account with optional initial native token balance."""
@@ -138,7 +139,7 @@ class BlockchainAgent(Agent):
     ) -> int:
         """Submit a new transaction to the mempool."""
         if gas_price is None:
-            gas_price = self.metrics.get("base_gas_price", 1.0)
+            gas_price = float(self.metrics["base_gas_price"])
         if gas_limit is None:
             gas_limit = 21000
         if confirmations is None:
