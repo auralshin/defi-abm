@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "defi-abm"
+version = "1.0.0"
+description = "Agent-based DeFi simulation plugin for Mesa"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Your Name"}]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "mesa>=1.0.0",
+  "pandas>=1.0.0",
+  "numpy>=1.18.0",
+  "matplotlib>=3.0.0",
+  "PyYAML>=5.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/defi-abm"
+
+[tool.setuptools.packages.find]
+where = ["src"]

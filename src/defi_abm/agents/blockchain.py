@@ -88,8 +88,8 @@ class BlockchainAgent(Agent):
             "tx_executed": 0,
             "total_fees_collected": 0.0,
             "blocks": [],
-            "base_gas_price": float(base_gas_price),
         }
+        # Explicitly store base gas price
         self.metrics["base_gas_price"] = float(base_gas_price)
 
         if initial_native_balance > 0:
