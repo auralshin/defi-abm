@@ -608,6 +608,18 @@ def test_blockchain_basic_account_and_transfer():
     assert bc.get_metrics()["total_fees_collected"] == pytest.approx(21000.0)
 
 
+def test_blockchain_initialization_sets_config_values():
+    m = Model()
+    bc = BlockchainAgent(model=m, block_time=1.0, confirmations=1,
+                         base_gas_price=5.0, initial_native_balance=10.0)
+
+    # base gas price should be stored in metrics for later default use
+    assert bc.get_metrics()["base_gas_price"] == pytest.approx(5.0)
+
+    # the blockchain agent itself should have the configured initial balance
+    assert bc.get_native_balance(bc) == pytest.approx(10.0)
+
+
 # ----------------------------------------
 # BlockchainAgent Advanced Features Tests
 # ----------------------------------------
