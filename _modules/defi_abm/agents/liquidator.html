@@ -249,6 +249,9 @@
           <h1>Source code for defi_abm.agents.liquidator</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mesa</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="LiquidatorAgent">
@@ -302,6 +305,9 @@
         <span class="n">collateral_to_seize</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">collateral_needed_unbounded</span><span class="p">,</span> <span class="n">max_seizable</span><span class="p">)</span>
 
         <span class="n">lending_agent</span><span class="o">.</span><span class="n">collateral_amount</span> <span class="o">-=</span> <span class="n">collateral_to_seize</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Liquidating agent </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%.4f</span><span class="s2"> debt&quot;</span><span class="p">,</span> <span class="n">lending_agent</span><span class="o">.</span><span class="n">unique_id</span><span class="p">,</span> <span class="n">debt_value</span>
+        <span class="p">)</span>
 
         <span class="n">recovered_amount</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">amm_pools</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">amm_pool_selector</span><span class="p">(</span><span class="n">lending_agent</span><span class="o">.</span><span class="n">collateral_token</span><span class="p">,</span> <span class="n">lending_agent</span><span class="o">.</span><span class="n">borrow_token</span><span class="p">)</span>
@@ -337,6 +343,9 @@
             <span class="s2">&quot;remaining_debt&quot;</span><span class="p">:</span> <span class="n">lending_agent</span><span class="o">.</span><span class="n">borrow_amount</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">fully_liquidated</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
             <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">steps</span><span class="p">,</span>
         <span class="p">}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Liquidation complete for </span><span class="si">%s</span><span class="s2">; repaid </span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">lending_agent</span><span class="o">.</span><span class="n">unique_id</span><span class="p">,</span> <span class="n">debt_repaid</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">event</span>
 
 <div class="viewcode-block" id="LiquidatorAgent.step">

@@ -249,6 +249,10 @@
           <h1>Source code for defi_abm.models.defi_model</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mesa</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mesa.datacollection</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataCollector</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">defi_abm.agents.oracle</span><span class="w"> </span><span class="kn">import</span> <span class="n">OracleAgent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">defi_abm.agents.amm</span><span class="w"> </span><span class="kn">import</span> <span class="n">AMMAgent</span>
@@ -407,10 +411,8 @@
 
 <div class="viewcode-block" id="DeFiModel.find_amm_pool">
 <a class="viewcode-back" href="../../../models.html#defi_abm.models.defi_model.DeFiModel.find_amm_pool">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">find_amm_pool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_x</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">token_y</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return AMMAgent if it matches given token pair, else None.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_amm_pool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_x</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">token_y</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AMMAgent</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return AMMAgent if it matches given token pair, else None.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">amm_pool</span><span class="o">.</span><span class="n">token_x</span> <span class="o">==</span> <span class="n">token_x</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">amm_pool</span><span class="o">.</span><span class="n">token_y</span> <span class="o">==</span> <span class="n">token_y</span>
         <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
@@ -434,6 +436,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Model step </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">shuffle_do</span><span class="p">(</span><span class="s2">&quot;step&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">datacollector</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
@@ -443,7 +447,10 @@
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;collateral_amount&quot;</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;tvls&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tvl</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;num_loans&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loans</span><span class="p">))</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;num_loans&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loans</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Step </span><span class="si">%s</span><span class="s2"> - TVL: </span><span class="si">%.2f</span><span class="s2">, Loans: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">,</span> <span class="n">tvl</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loans</span><span class="p">)</span>
+        <span class="p">)</span></div>
 </div>
 
 </pre></div>
