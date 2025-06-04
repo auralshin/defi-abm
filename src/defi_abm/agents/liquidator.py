@@ -1,5 +1,5 @@
 from mesa import Agent
-from typing import Optional, Callable, List, Tuple
+from typing import Optional, Callable, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,10 @@ class LiquidatorAgent(Agent):
         lending_agent.borrow_amount -= debt_repaid
         penalty_paid = debt_value * self.liquidation_penalty
 
-        fully_liquidated = lending_agent.borrow_amount <= 1e-8 or collateral_to_seize >= lending_agent.collateral_amount + collateral_to_seize - 1e-8
+        fully_liquidated = (
+            lending_agent.borrow_amount <= 1e-8
+            or lending_agent.collateral_amount <= 1e-8
+        )
 
         if fully_liquidated:
             if lending_agent in self.model.loans:

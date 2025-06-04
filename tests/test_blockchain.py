@@ -7,7 +7,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import importlib
 import defi_abm
 importlib.reload(defi_abm)
-print('MODULE', defi_abm.__file__)
 
 from defi_abm.agents.blockchain import BlockchainAgent
 
@@ -85,8 +84,6 @@ def test_blockchain_custom_base_gas_price():
         confirmations=1,
     )
     assert tx_id == 1
-    print('DEBUG', bc.metrics)
-    print('Mempool gas', bc.mempool[0].gas_price)
     assert bc.mempool[0].gas_price > 0
 
     bc = BlockchainAgent(model=m, block_time=1.0, confirmations=1, base_gas_price=5.0, initial_native_balance=10.0)
