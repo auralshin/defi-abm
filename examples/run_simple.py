@@ -10,7 +10,7 @@ from defi_abm.models.defi_model import DeFiModel
 def main():
     # 1. Locate and load the YAML configuration
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(script_dir, "config_simple.yaml")
+    config_path = os.path.join(script_dir, "config_liquidation.yaml")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
