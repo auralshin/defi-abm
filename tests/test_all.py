@@ -607,6 +607,28 @@ def test_blockchain_basic_account_and_transfer():
     # Check fees collected: 21000 units
     assert bc.get_metrics()["total_fees_collected"] == pytest.approx(21000.0)
 
+def test_blockchain_custom_base_gas_price():
+    m = Model()
+    bc = BlockchainAgent(model=m, block_time=1.0, confirmations=1, base_gas_price=5.0)
+
+    bc.create_account("Alice", initial_balance=100.0)
+
+    def noop(sender, receiver, payload, blockchain: BlockchainAgent):
+        return 21000, None
+
+    tx_id = bc.submit_transaction(
+        sender="Alice",
+        receiver="Bob",
+        data_fn=noop,
+        gas_price=None,
+        gas_limit=21000,
+        payload=None,
+        confirmations=1,
+    )
+
+    assert tx_id == 1
+    assert bc.mempool[0].gas_price == pytest.approx(5.0)
+    assert bc.metrics["base_gas_price"] == pytest.approx(5.0)
 
 def test_blockchain_initialization_sets_config_values():
     m = Model()
@@ -618,6 +640,7 @@ def test_blockchain_initialization_sets_config_values():
 
     # the blockchain agent itself should have the configured initial balance
     assert bc.get_native_balance(bc) == pytest.approx(10.0)
+
 
 
 # ----------------------------------------

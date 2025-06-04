@@ -90,6 +90,7 @@ class BlockchainAgent(Agent):
             "blocks": [],
             "base_gas_price": float(base_gas_price),
         }
+        self.metrics["base_gas_price"] = float(base_gas_price)
 
         if initial_native_balance > 0:
             # Allow the blockchain itself to hold a balance for paying refunds
@@ -144,7 +145,7 @@ class BlockchainAgent(Agent):
     ) -> int:
         """Submit a new transaction to the mempool."""
         if gas_price is None:
-            gas_price = self.metrics.get("base_gas_price", 1.0)
+            gas_price = float(self.metrics["base_gas_price"])
         if gas_limit is None:
             gas_limit = 21000
         if confirmations is None:
