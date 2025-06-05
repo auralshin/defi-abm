@@ -1,4 +1,4 @@
-# DeFi-ABM
+# DeFi-ABM [In Development]
 
 DeFi-ABM is a modular agent-based simulation framework for decentralized finance built as a plugin for the [Mesa](https://mesa.readthedocs.io/) toolkit.
 
