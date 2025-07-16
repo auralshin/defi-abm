@@ -6,6 +6,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import importlib
+for m in list(sys.modules):
+    if m.startswith("defi_abm"):
+        sys.modules.pop(m)
 import defi_abm
 importlib.reload(defi_abm)
 
@@ -26,7 +29,7 @@ def simple_config(tmp_path):
         "simulation": {"steps": 2, "seed": 123},
         "protocols": {
             "oracle": {"price_csv": price_csv_path, "initial_price": 100.0, "mode": "csv"},
-            "amm": {"token_x": "ETH", "token_y": "DAI", "reserve_x": 5.0, "reserve_y": 1000.0, "fee_rate": 0.0},
+            "amm": [{"token_x": "ETH", "token_y": "DAI", "reserve_x": 5.0, "reserve_y": 1000.0, "fee_rate": 0.0}],
             "lending": {
                 "collateral_factor": 0.75,
                 "interest_rate_apr": 0.0,

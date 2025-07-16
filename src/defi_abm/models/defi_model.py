@@ -40,13 +40,12 @@ class DeFiModel(Model):
         oracle_cfg = proto_cfg.get("oracle", {})
         self.initial_price = float(oracle_cfg.get("initial_price", 1.0))
 
-        # AMM configuration
-        amm_cfg = proto_cfg.get("amm", {})
-        self.amm_token_x = amm_cfg.get("token_x", "TOKEN_X")
-        self.amm_token_y = amm_cfg.get("token_y", "TOKEN_Y")
-        self.amm_reserve_x = float(amm_cfg.get("reserve_x", 1.0))
-        self.amm_reserve_y = float(amm_cfg.get("reserve_y", 1.0))
-        self.amm_fee_rate = float(amm_cfg.get("fee_rate", 0.003))
+        # AMM configuration - accept single dict or list of dicts
+        amm_cfg_raw = proto_cfg.get("amm", {})
+        if isinstance(amm_cfg_raw, list):
+            self.amm_cfgs = amm_cfg_raw
+        else:
+            self.amm_cfgs = [amm_cfg_raw]
 
         # Lending configuration
         lending_cfg = proto_cfg.get("lending", {})
@@ -77,7 +76,7 @@ class DeFiModel(Model):
         )
 
         self._init_oracle(oracle_cfg)
-        self._init_amm(amm_cfg)
+        self._init_amm(self.amm_cfgs)
         self._init_lending_agents(self.lending_agents_cfg)
         self._init_liquidator(self.liquidation_penalty)
 
@@ -103,19 +102,27 @@ class DeFiModel(Model):
                 interpolate=oracle_cfg.get("interpolate", False),
             )
 
-    def _init_amm(self, amm_cfg: dict):
+    def _init_amm(self, amm_cfgs: list):
         """
-        Instantiate a single AMMAgent and store reference in self.amm_pool.
+        Instantiate AMMAgent objects from a configuration list.
+        Stores them in ``self.amm_pools``. ``self.amm_pool`` references the first
+        pool for backwards compatibility.
         """
-        amm = AMMAgent(
-            self,
-            token_x=self.amm_token_x,
-            token_y=self.amm_token_y,
-            reserve_x=self.amm_reserve_x,
-            reserve_y=self.amm_reserve_y,
-            fee_rate=self.amm_fee_rate,
-        )
-        self.amm_pool = amm
+        self.amm_pools = []
+        for cfg in amm_cfgs:
+            amm = AMMAgent(
+                self,
+                token_x=cfg.get("token_x", "TOKEN_X"),
+                token_y=cfg.get("token_y", "TOKEN_Y"),
+                reserve_x=float(cfg.get("reserve_x", 1.0)),
+                reserve_y=float(cfg.get("reserve_y", 1.0)),
+                fee_rate=float(cfg.get("fee_rate", 0.003)),
+            )
+            self.amm_pools.append(amm)
+
+        if self.amm_pools:
+            # Keep the original single-pool attribute for older code/tests
+            self.amm_pool = self.amm_pools[0]
 
     def _init_lending_agents(self, agents_cfg: list):
         """
@@ -150,13 +157,14 @@ class DeFiModel(Model):
             self.loans.append(lending_agent)
 
     def find_amm_pool(self, token_x: str, token_y: str) -> Optional[AMMAgent]:
-        """Return AMMAgent if it matches given token pair, else None."""
-        if (
-            self.amm_pool.token_x == token_x and self.amm_pool.token_y == token_y
-        ) or (
-            self.amm_pool.token_x == token_y and self.amm_pool.token_y == token_x
-        ):
-            return self.amm_pool
+        """Return AMMAgent matching the token pair, if any."""
+        for pool in getattr(self, "amm_pools", []):
+            if (
+                pool.token_x == token_x and pool.token_y == token_y
+            ) or (
+                pool.token_x == token_y and pool.token_y == token_x
+            ):
+                return pool
         return None
 
     def step(self):

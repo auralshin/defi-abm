@@ -24,7 +24,7 @@ config = {
     "simulation": {"steps": 2},
     "protocols": {
         "oracle": {"mode": "static", "initial_price": 100.0},
-        "amm": {"token_x": "ETH", "token_y": "DAI", "reserve_x": 5.0, "reserve_y": 1000.0},
+        "amm": [{"token_x": "ETH", "token_y": "DAI", "reserve_x": 5.0, "reserve_y": 1000.0}],
         "lending": {"collateral_factor": 0.75, "agents": [{"collateral_token": "ETH", "borrow_token": "DAI", "collateral_amount": 1.0, "desired_ltv": 0.5}]},
     },
 }

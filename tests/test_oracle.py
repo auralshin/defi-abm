@@ -6,6 +6,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import importlib
+for m in list(sys.modules):
+    if m.startswith("defi_abm"):
+        sys.modules.pop(m)
 import defi_abm
 importlib.reload(defi_abm)
 

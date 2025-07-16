@@ -9,11 +9,11 @@ protocols:
     mode: csv
 
   amm:
-    token_x: "ETH"
-    token_y: "DAI"
-    reserve_x: 10.0
-    reserve_y: 20000.0
-    fee_rate: 0.003
+    - token_x: "ETH"
+      token_y: "DAI"
+      reserve_x: 10.0
+      reserve_y: 20000.0
+      fee_rate: 0.003
 
   lending:
     collateral_factor: 0.75
